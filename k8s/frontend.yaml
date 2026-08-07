@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: images-gallery
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/cloud-container-g2
+                operator: In
+                values:
+                - "true"
+      containers:
+      - name: frontend
+        image: rwinrad/images-gallery-frontend:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: VITE_API_BASE
+          value: "" 
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "256m"
+            ephemeral-storage: "1Gi"
+          requests:
+            memory: "512Mi"
+            cpu: "256m"
+            ephemeral-storage: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: images-gallery
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
