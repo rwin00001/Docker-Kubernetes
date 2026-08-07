@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: images-gallery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/cloud-container-g2
+                operator: In
+                values:
+                - "true"
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "256m"
+            ephemeral-storage: "1Gi"
+          requests:
+            memory: "512Mi"
+            cpu: "256m"
+            ephemeral-storage: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: images-gallery
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
